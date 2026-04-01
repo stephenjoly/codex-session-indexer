@@ -120,7 +120,7 @@ download_archive_checkout() {
   local archive_url="$1"
   local tmpdir
   tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' RETURN
+  trap "rm -rf '$tmpdir'" RETURN
 
   echo "Downloading source archive"
   curl -fsSL "$archive_url" -o "$tmpdir/source.tar.gz"
