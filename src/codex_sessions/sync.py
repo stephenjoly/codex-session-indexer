@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -286,6 +287,56 @@ def _project_output_path(cwd: Path, output_filename: str) -> Path:
     return cwd / output_filename
 
 
+def _git_repo_root(path: Path) -> Path | None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return None
+
+    repo_root = result.stdout.strip()
+    return Path(repo_root).resolve() if repo_root else None
+
+
+def _gitignore_entry_for_output(repo_root: Path, output_path: Path) -> str | None:
+    try:
+        relative_path = output_path.resolve().relative_to(repo_root).as_posix()
+    except ValueError:
+        return None
+    return f"/{relative_path}"
+
+
+def ensure_gitignore_contains(output_path: Path, *, dry_run: bool) -> Path | None:
+    repo_root = _git_repo_root(output_path.parent)
+    if repo_root is None:
+        return None
+
+    entry = _gitignore_entry_for_output(repo_root, output_path)
+    if entry is None:
+        return None
+
+    gitignore_path = repo_root / ".gitignore"
+    existing = gitignore_path.read_text(encoding="utf-8") if gitignore_path.exists() else ""
+    lines = {line.strip() for line in existing.splitlines()}
+    if entry in lines or entry.removeprefix("/") in lines:
+        return None
+
+    updated = existing
+    if updated and not updated.endswith("\n"):
+        updated += "\n"
+    updated += f"{entry}\n"
+
+    if dry_run:
+        return gitignore_path
+
+    gitignore_path.write_text(updated, encoding="utf-8")
+    return gitignore_path
+
+
 def _session_sort_key(session: CachedSession) -> tuple[datetime, str]:
     return (session.last_updated_at, str(session.session_file_path))
 
@@ -406,6 +457,10 @@ def run_sync(config: SyncConfig) -> SyncStats:
                 if config.verbose:
                     prefix = "would write" if config.dry_run else "wrote"
                     print(f"{prefix} {output_path}")
+            gitignore_path = ensure_gitignore_contains(output_path, dry_run=config.dry_run)
+            if gitignore_path is not None and config.verbose:
+                prefix = "would update" if config.dry_run else "updated"
+                print(f"{prefix} {gitignore_path}")
         else:
             if output_path.exists() and is_managed_generated_file(output_path):
                 deleted = delete_file(output_path, dry_run=config.dry_run)

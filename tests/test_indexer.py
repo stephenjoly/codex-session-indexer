@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import subprocess
 import tempfile
 import threading
 import time
@@ -367,6 +368,34 @@ class IndexerTests(unittest.TestCase):
             self.assertEqual(stats.project_files_deleted, 1)
             self.assertFalse(project_file.exists())
 
+    def test_project_output_is_added_to_gitignore_for_repo_root_project(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            config, project_a, _, _, _, _, _ = self._build_workspace(root)
+            self._init_git_repo(project_a)
+
+            run_sync(config)
+
+            gitignore = project_a / ".gitignore"
+            self.assertTrue(gitignore.exists())
+            self.assertIn("/codex-sessions.md", gitignore.read_text(encoding="utf-8"))
+
+            before = gitignore.read_text(encoding="utf-8")
+            run_sync(config)
+            self.assertEqual(before, gitignore.read_text(encoding="utf-8"))
+
+    def test_project_output_is_added_to_gitignore_for_nested_project_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            config, project_a, _, _, _, _, _ = self._build_workspace(root)
+            self._init_git_repo(config.global_root)
+
+            run_sync(config)
+
+            gitignore = config.global_root / ".gitignore"
+            self.assertTrue(gitignore.exists())
+            self.assertIn("/project-a/codex-sessions.md", gitignore.read_text(encoding="utf-8"))
+
     def test_config_change_deletes_old_managed_output_and_rebuilds(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -576,6 +605,9 @@ class IndexerTests(unittest.TestCase):
             full_rebuild=False,
         )
         return config, project_a, project_b, outside_project, sessions_dir, index_path, state_file
+
+    def _init_git_repo(self, path: Path) -> None:
+        subprocess.run(["git", "init", "-b", "main", str(path)], check=True, capture_output=True, text=True)
 
 
 if __name__ == "__main__":
