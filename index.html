@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Codex Session Indexer</title>
+  <meta
+    name="description"
+    content="Codex Session Indexer turns local Codex history into project-level markdown timelines with incremental sync and optional watch mode."
+  />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --bg: #111418;
+      --bg-soft: #171b20;
+      --line: rgba(255, 255, 255, 0.12);
+      --line-soft: rgba(255, 255, 255, 0.08);
+      --text: #f3efe8;
+      --muted: #aab2bf;
+      --muted-strong: #c9d0d9;
+      --accent: #7dd6c7;
+      --paper: #f6f1e8;
+      --paper-line: #d8d0c3;
+      --paper-text: #17212c;
+      --sans: "Avenir Next", "Helvetica Neue", "Segoe UI", sans-serif;
+      --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+      --page: 920px;
+      --copy: 42rem;
+      --shadow: 0 28px 70px rgba(0, 0, 0, 0.34);
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--serif);
+      background:
+        radial-gradient(circle at top left, rgba(125, 214, 199, 0.11), transparent 30%),
+        radial-gradient(circle at 84% 12%, rgba(255, 255, 255, 0.05), transparent 16%),
+        linear-gradient(180deg, #13171c 0%, #0f1216 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px);
+      background-size: 88px 88px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.72), transparent 88%);
+      opacity: 0.34;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.88em;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(var(--page), calc(100% - 1.5rem));
+      margin: 0 auto;
+      padding: 1.4rem 0 5rem;
+    }
+
+    .hero {
+      min-height: min(100svh, 980px);
+      padding: 1.8rem 0 3.4rem;
+      display: grid;
+      align-content: start;
+      gap: 1.75rem;
+    }
+
+    .brand-row,
+    .meta-row,
+    .link-row,
+    .footer-row,
+    .footer-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem 1rem;
+      align-items: center;
+      font-family: var(--sans);
+      font-size: 0.76rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .brand-row {
+      color: var(--accent);
+      animation: fade-up 720ms ease both;
+    }
+
+    .brand-row::before {
+      content: "";
+      width: 2.5rem;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent));
+    }
+
+    .hero-copy {
+      max-width: 44rem;
+      animation: fade-up 720ms ease 80ms both;
+    }
+
+    h1 {
+      margin: 0 0 0.9rem;
+      max-width: 10ch;
+      font-size: clamp(3.15rem, 8.8vw, 6.4rem);
+      line-height: 0.92;
+      letter-spacing: -0.055em;
+      font-weight: 500;
+    }
+
+    .hero-copy p {
+      max-width: var(--copy);
+      margin: 0;
+      color: var(--muted-strong);
+      font-size: 1.08rem;
+      line-height: 1.86;
+    }
+
+    .meta-row {
+      color: #8e97a4;
+      animation: fade-up 720ms ease 150ms both;
+    }
+
+    .install-block {
+      width: min(100%, 50rem);
+      padding: 1rem 1.05rem 1.1rem;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      animation: fade-up 720ms ease 220ms both;
+    }
+
+    .install-label,
+    .section-label,
+    .preview-meta,
+    .mode-label {
+      display: block;
+      font-family: var(--sans);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #8e97a4;
+    }
+
+    .shell {
+      margin: 0.7rem 0 0;
+      padding: 0.95rem 1rem;
+      border: 1px solid rgba(125, 214, 199, 0.22);
+      background: rgba(0, 0, 0, 0.22);
+      color: #f4efe7;
+      font-family: var(--mono);
+      font-size: 0.84rem;
+      line-height: 1.62;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      user-select: all;
+    }
+
+    .link-row {
+      margin-top: 0.95rem;
+      color: #cbd3dd;
+      animation: fade-up 720ms ease 280ms both;
+    }
+
+    .link-row a,
+    .section-links a,
+    .footer-row a {
+      text-decoration: none;
+      border-bottom: 1px solid rgba(125, 214, 199, 0.34);
+      color: var(--accent);
+      padding-bottom: 0.16rem;
+    }
+
+    .link-row a:hover,
+    .section-links a:hover,
+    .footer-row a:hover {
+      color: #b4f3e9;
+      border-bottom-color: #b4f3e9;
+    }
+
+    .preview-frame {
+      margin-top: 0.25rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: var(--shadow);
+      animation: fade-up 820ms ease 340ms both;
+    }
+
+    .preview-paper {
+      max-width: 100%;
+      padding: 1.65rem 1.55rem;
+      background: var(--paper);
+      color: var(--paper-text);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        0 16px 36px rgba(0, 0, 0, 0.12);
+      border-radius: 2px;
+    }
+
+    .preview-header {
+      display: grid;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-family: var(--sans);
+    }
+
+    .preview-header h2 {
+      margin: 0;
+      font-size: clamp(1.3rem, 2vw, 1.65rem);
+      letter-spacing: -0.03em;
+      color: #17222d;
+    }
+
+    .preview-stamp {
+      color: #6f7987;
+      font-size: 0.9rem;
+      line-height: 1.65;
+    }
+
+    .preview-info {
+      display: grid;
+      gap: 0.7rem;
+      margin-bottom: 1.2rem;
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      color: #394451;
+    }
+
+    .preview-info div {
+      display: grid;
+      gap: 0.16rem;
+    }
+
+    .preview-groups {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .preview-group h3 {
+      margin: 0 0 0.55rem;
+      font-family: var(--sans);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #6b7480;
+    }
+
+    .preview-group ol {
+      margin: 0;
+      padding-left: 1.15rem;
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      color: #22303d;
+    }
+
+    .preview-group li + li {
+      margin-top: 0.42rem;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--sans);
+      font-size: 0.84rem;
+      color: #24303b;
+    }
+
+    .preview-table th,
+    .preview-table td {
+      padding: 0.52rem 0.36rem;
+      border-bottom: 1px solid var(--paper-line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .preview-table th {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6a7380;
+    }
+
+    .preview-path {
+      word-break: break-word;
+    }
+
+    main {
+      display: grid;
+      gap: 3.2rem;
+      padding-top: 0.8rem;
+    }
+
+    section {
+      display: grid;
+      gap: 1rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--line-soft);
+      animation: fade-up 720ms ease both;
+    }
+
+    .section-head {
+      display: grid;
+      gap: 0.4rem;
+      max-width: 50rem;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+    }
+
+    .section-head p,
+    .mode p,
+    .workflow li,
+    .feature-list li {
+      max-width: var(--copy);
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.82;
+    }
+
+    .feature-list,
+    .workflow {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .feature-list li,
+    .workflow li {
+      display: grid;
+      gap: 0.28rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .feature-list li:last-child,
+    .workflow li:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .feature-title,
+    .workflow-title,
+    .mode h3 {
+      margin: 0;
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.6rem;
+    }
+
+    .mode {
+      display: grid;
+      gap: 0.7rem;
+      align-content: start;
+      padding-right: 0.2rem;
+    }
+
+    .mode p {
+      font-size: 0.98rem;
+    }
+
+    .mode-label {
+      margin-bottom: 0.2rem;
+    }
+
+    .mode-notes {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.38rem;
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .mode-notes li::before {
+      content: "• ";
+      color: #6b7480;
+    }
+
+    .section-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem 1rem;
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .footer-row {
+      justify-content: space-between;
+      color: #8e97a4;
+    }
+
+    .footer-items {
+      color: inherit;
+    }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 780px) {
+      .preview-info,
+      .preview-groups,
+      .modes {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-row,
+      .footer-items {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(var(--page), calc(100% - 1rem));
+        padding-top: 1rem;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 1rem;
+      }
+
+      .preview-frame {
+        padding: 0.8rem;
+      }
+
+      .preview-paper {
+        padding: 1.1rem 0.95rem;
+      }
+
+      .shell {
+        font-size: 0.78rem;
+      }
+
+      .section-head h2 {
+        font-size: 1.42rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="brand-row">Project Memory for Codex</div>
+
+      <div class="hero-copy">
+        <h1>Codex Session Indexer</h1>
+        <p>
+          Turn local Codex history into clean project markdown files so each repository keeps its own readable session history.
+        </p>
+      </div>
+
+      <div class="meta-row">
+        <span>Stephen Joly</span>
+        <span>Python CLI</span>
+        <span>Incremental Sync</span>
+        <span>Optional Watcher</span>
+      </div>
+
+      <div class="install-block">
+        <span class="install-label">Default install</span>
+        <pre class="shell">curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash</pre>
+      </div>
+
+      <div class="link-row">
+        <a href="https://github.com/stephenjoly/codex-session-indexer" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="install.sh">Installer Script</a>
+      </div>
+
+      <div class="preview-frame" aria-label="Rendered markdown preview">
+        <div class="preview-paper">
+          <div class="preview-header">
+            <div>
+              <span class="preview-meta">Rendered preview</span>
+              <h2>Codex Sessions</h2>
+            </div>
+            <div class="preview-stamp">Generated: 2026-04-01 16:07:03Z</div>
+          </div>
+
+          <div class="preview-info">
+            <div>
+              This file is fully generated by <code>codex-sessions generate</code>.
+            </div>
+            <div>
+              Directory: <code class="preview-path">/Users/stephenjoly/Documents/Coding/market-call-summaries</code>
+            </div>
+            <div>Session count: 7</div>
+          </div>
+
+          <div class="preview-groups">
+            <div class="preview-group">
+              <h3>Most Recent Sessions</h3>
+              <ol>
+                <li><strong>Secure Supabase public table</strong> | updated 2026-04-01 16:02:34Z | 8 prompts | 2h 56m 11s</li>
+                <li><strong>Add Docker deployment files</strong> | updated 2026-04-01 11:03:41Z | 27 prompts | 20h 46m 39s</li>
+                <li><strong>Restart app after Supabase recovery</strong> | updated 2026-03-24 13:50:55Z | 1 prompt | 33s</li>
+              </ol>
+            </div>
+            <div class="preview-group">
+              <h3>Most Active Sessions</h3>
+              <ol>
+                <li><strong>Outline project overview</strong> | 80 prompts | 86h 43m 48s</li>
+                <li><strong>Add Docker deployment files</strong> | 27 prompts | 20h 46m 39s</li>
+                <li><strong>Secure Supabase public table</strong> | 8 prompts | 2h 56m 11s</li>
+              </ol>
+            </div>
+          </div>
+
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>Session</th>
+                <th>Last updated</th>
+                <th>Lifetime</th>
+                <th>Prompts</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Secure Supabase public table</td>
+                <td>2026-04-01 16:02:34Z</td>
+                <td>2h 56m 11s</td>
+                <td>8</td>
+              </tr>
+              <tr>
+                <td>Add Docker deployment files</td>
+                <td>2026-04-01 11:03:41Z</td>
+                <td>20h 46m 39s</td>
+                <td>27</td>
+              </tr>
+              <tr>
+                <td>Report current project status</td>
+                <td>2026-03-24 01:08:57Z</td>
+                <td>43m 54s</td>
+                <td>8</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section style="animation-delay: 80ms;">
+        <div class="section-head">
+          <span class="section-label">What It Does</span>
+          <h2>Codex already keeps the history. This puts it back where the work happened.</h2>
+          <p>
+            It reads <code>~/.codex/sessions</code>, groups sessions by exact working directory, and writes <code>codex-sessions.md</code> into the affected projects plus one global recent-session index.
+          </p>
+        </div>
+      </section>
+
+      <section style="animation-delay: 140ms;">
+        <div class="section-head">
+          <span class="section-label">Why It Helps</span>
+          <h2>Three things matter.</h2>
+        </div>
+        <ul class="feature-list">
+          <li>
+            <strong class="feature-title">Readable first</strong>
+            <p>Recent sessions and active sessions show up before the full table.</p>
+          </li>
+          <li>
+            <strong class="feature-title">Cheap to keep current</strong>
+            <p>Incremental sync means unchanged projects do not get rewritten.</p>
+          </li>
+          <li>
+            <strong class="feature-title">Fits the way Codex is used</strong>
+            <p>Run it manually, keep a watcher open, or install a macOS daemon.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section style="animation-delay: 200ms;">
+        <div class="section-head">
+          <span class="section-label">Install Modes</span>
+          <h2>One default path for most people, one always-on path for heavy daily use.</h2>
+        </div>
+        <div class="modes">
+          <article class="mode">
+            <span class="mode-label">Manual / Incremental</span>
+            <h3>Run it when you want a refresh</h3>
+            <p>The default path. Install once, then call <code>generate</code> whenever you want fresh indexes.</p>
+            <ul class="mode-notes">
+              <li>No long-running process required</li>
+              <li>Fast incremental sync by default</li>
+              <li>Best fit for most users</li>
+            </ul>
+            <pre class="shell">codex-sessions generate --global-root "$HOME/Documents/Coding" --verbose</pre>
+          </article>
+
+          <article class="mode">
+            <span class="mode-label">Watch / Daemon</span>
+            <h3>Keep indexes current while you work</h3>
+            <p>Use the same sync engine in watch mode so the right project files update automatically.</p>
+            <ul class="mode-notes">
+              <li>Near real-time updates</li>
+              <li>Good fit for heavy Codex workflows</li>
+              <li>Installer can register a macOS <code>launchd</code> watcher</li>
+            </ul>
+            <pre class="shell">codex-sessions watch --global-root "$HOME/Documents/Coding" --verbose</pre>
+          </article>
+        </div>
+      </section>
+
+      <section style="animation-delay: 260ms;">
+        <div class="section-head">
+          <span class="section-label">How It Works</span>
+          <h2>Short path, local state, deterministic output.</h2>
+        </div>
+        <ol class="workflow">
+          <li>
+            <strong class="workflow-title">Read the session store</strong>
+            Parse session files from <code>~/.codex/sessions</code> and thread names from <code>~/.codex/session_index.jsonl</code>.
+          </li>
+          <li>
+            <strong class="workflow-title">Derive project summaries</strong>
+            Calculate titles, timestamps, prompt counts, recent highlights, and active-session rankings from the underlying session events.
+          </li>
+          <li>
+            <strong class="workflow-title">Write only where needed</strong>
+            Update the exact project <code>codex-sessions.md</code> files affected by changes, plus the global index when relevant.
+          </li>
+          <li>
+            <strong class="workflow-title">Persist sync state</strong>
+            Keep incremental state in <code>~/.codex/codex-session-indexer-state.json</code> so the next run can skip unchanged work.
+          </li>
+        </ol>
+      </section>
+
+      <section style="animation-delay: 320ms;">
+        <div class="section-head">
+          <span class="section-label">Links</span>
+          <h2>The whole release surface is small on purpose.</h2>
+        </div>
+        <div class="section-links">
+          <a href="install.sh">Installer Script</a>
+          <a href="https://github.com/stephenjoly/codex-session-indexer" target="_blank" rel="noreferrer">GitHub Repository</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-row">
+        <span>Codex Session Indexer</span>
+        <div class="footer-items">
+          <span>Local first</span>
+          <span>Incremental by default</span>
+          <span>Readable markdown</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

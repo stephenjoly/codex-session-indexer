@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-session-indexer"
+version = "0.2.0"
+description = "Generate Markdown indexes for local Codex session history."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "Stephen Joly" }
+]
+license = { text = "MIT" }
+keywords = ["codex", "sessions", "markdown", "cli"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+  "watchdog>=4,<7",
+]
+
+[project.scripts]
+codex-sessions = "codex_sessions.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
