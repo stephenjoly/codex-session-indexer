@@ -176,6 +176,15 @@
       user-select: all;
     }
 
+    .install-note {
+      margin: 0.7rem 0 0;
+      max-width: 40rem;
+      color: #aeb6c3;
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
     .link-row {
       margin-top: 0.95rem;
       color: #cbd3dd;
@@ -517,6 +526,7 @@
       <div class="install-block">
         <span class="install-label">Default install</span>
         <pre class="shell">curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash</pre>
+        <p class="install-note">The installer prefers <code>pipx</code> when it is available and falls back to an isolated venv when it is not.</p>
       </div>
 
       <div class="link-row">
@@ -626,6 +636,10 @@
           <li>
             <strong class="feature-title">Fits the way Codex is used</strong>
             <p>Run it manually, keep a watcher open, or install a macOS daemon.</p>
+          </li>
+          <li>
+            <strong class="feature-title">Simple install path</strong>
+            <p>One command installs the CLI cleanly with <code>pipx</code> when available, without leaving a repo checkout behind.</p>
           </li>
         </ul>
       </section>

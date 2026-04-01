@@ -3,6 +3,7 @@ set -euo pipefail
 
 INSTALL_DIR="${CODEX_SESSIONS_INSTALL_DIR:-$HOME/.codex/codex-session-indexer}"
 BIN_DIR="${CODEX_SESSIONS_BIN_DIR:-$HOME/.local/bin}"
+PIPX_HOME="${CODEX_SESSIONS_PIPX_HOME:-$HOME/.local/pipx}"
 KEEP_STATE=0
 
 usage() {
@@ -57,6 +58,16 @@ remove_launchd_daemon() {
   fi
 }
 
+remove_pipx_install() {
+  if ! command -v pipx >/dev/null 2>&1; then
+    return
+  fi
+
+  if PIPX_HOME="$PIPX_HOME" PIPX_BIN_DIR="$BIN_DIR" pipx uninstall codex-session-indexer >/dev/null 2>&1; then
+    echo "Removed pipx install: codex-session-indexer"
+  fi
+}
+
 remove_symlink() {
   local link_path="$BIN_DIR/codex-sessions"
   if [[ -L "$link_path" || -f "$link_path" ]]; then
@@ -82,6 +93,7 @@ remove_state_files() {
 }
 
 remove_launchd_daemon
+remove_pipx_install
 remove_symlink
 remove_install_dir
 

@@ -19,10 +19,18 @@ One-command install:
 curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash
 ```
 
+The installer prefers `pipx` when it is available. If `pipx` is not installed, it falls back to an isolated venv install under `~/.codex/codex-session-indexer`.
+
 One-command install plus background watcher on macOS:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash -s -- --daemon
+```
+
+Direct `pipx` install:
+
+```bash
+pipx install https://github.com/stephenjoly/codex-session-indexer/archive/refs/heads/main.tar.gz
 ```
 
 One-command uninstall:
@@ -37,13 +45,19 @@ During local development, you can test the installer against a local checkout:
 bash install.sh --repo-url /absolute/path/to/codex-session-indexer
 ```
 
+Force a fallback venv install:
+
+```bash
+bash install.sh --venv
+```
+
 Manual install:
 
 ```bash
 cd codex-session-indexer
 python3 -m venv .venv
 source .venv/bin/activate
-python3 -m pip install -e .
+python3 -m pip install .
 ```
 
 ## Uninstall
@@ -60,8 +74,15 @@ Keep the incremental state and log files:
 curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/uninstall.sh | bash -s -- --keep-state
 ```
 
+Direct `pipx` uninstall:
+
+```bash
+pipx uninstall codex-session-indexer
+```
+
 The uninstall script removes:
 
+- the `pipx` install, if that was the chosen install mode
 - the installed project directory under `~/.codex/codex-session-indexer`
 - the `~/.local/bin/codex-sessions` symlink
 - the macOS `launchd` watcher if it exists
