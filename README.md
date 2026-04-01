@@ -13,8 +13,7 @@ The tool scans `~/.codex/sessions` and `~/.codex/session_index.jsonl`, then writ
 Codex keeps session history in `~/.codex/sessions`, but sessions are grouped together across projects. This tool projects that history back into the directories where you worked so you can see recent conversations without opening the raw session store.
 
 ## Install
-
-One-command install after you publish the repo:
+One-command install:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash
@@ -24,6 +23,12 @@ One-command install plus background watcher on macOS:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash -s -- --daemon
+```
+
+One-command uninstall:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/uninstall.sh | bash
 ```
 
 During local development, you can test the installer against a local checkout:
@@ -40,6 +45,29 @@ python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -e .
 ```
+
+## Uninstall
+
+Default uninstall:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/uninstall.sh | bash
+```
+
+Keep the incremental state and log files:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/uninstall.sh | bash -s -- --keep-state
+```
+
+The uninstall script removes:
+
+- the installed project directory under `~/.codex/codex-session-indexer`
+- the `~/.local/bin/codex-sessions` symlink
+- the macOS `launchd` watcher if it exists
+- the tool's state and log files in `~/.codex` by default
+
+It does not remove generated `codex-sessions.md` files or the generated global index.
 
 ## Usage
 

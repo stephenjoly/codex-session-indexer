@@ -522,6 +522,7 @@
       <div class="link-row">
         <a href="https://github.com/stephenjoly/codex-session-indexer" target="_blank" rel="noreferrer">GitHub</a>
         <a href="install.sh">Installer Script</a>
+        <a href="uninstall.sh">Uninstall Script</a>
       </div>
 
       <div class="preview-frame" aria-label="Rendered markdown preview">
@@ -663,6 +664,17 @@
 
       <section style="animation-delay: 260ms;">
         <div class="section-head">
+          <span class="section-label">Uninstall</span>
+          <h2>Remove the tool without touching the generated project files.</h2>
+          <p>
+            The uninstall script removes the installed CLI, symlink, watcher, and local state. It leaves <code>codex-sessions.md</code> files in place so it does not delete project files unexpectedly.
+          </p>
+        </div>
+        <pre class="shell">curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/uninstall.sh | bash</pre>
+      </section>
+
+      <section style="animation-delay: 320ms;">
+        <div class="section-head">
           <span class="section-label">How It Works</span>
           <h2>Short path, local state, deterministic output.</h2>
         </div>
@@ -686,13 +698,14 @@
         </ol>
       </section>
 
-      <section style="animation-delay: 320ms;">
+      <section style="animation-delay: 380ms;">
         <div class="section-head">
           <span class="section-label">Links</span>
           <h2>The whole release surface is small on purpose.</h2>
         </div>
         <div class="section-links">
           <a href="install.sh">Installer Script</a>
+          <a href="uninstall.sh">Uninstall Script</a>
           <a href="https://github.com/stephenjoly/codex-session-indexer" target="_blank" rel="noreferrer">GitHub Repository</a>
         </div>
       </section>
