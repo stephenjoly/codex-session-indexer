@@ -2,6 +2,8 @@
 
 Generate Markdown indexes from your local Codex session history.
 
+This is a workaround for mixed Codex history across projects. It does not change Codex's built-in Recent Tasks UI inside VS Code or the desktop app. Instead, it generates per-project Markdown indexes from the local session store.
+
 The tool scans `~/.codex/sessions` and `~/.codex/session_index.jsonl`, then writes:
 
 - A fully generated `codex-sessions.md` in each discovered session working directory
