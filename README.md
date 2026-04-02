@@ -27,6 +27,8 @@ One-command install plus background watcher on macOS:
 curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash -s -- --daemon
 ```
 
+`codex-sessions watch` is a foreground watcher that stays attached to your shell. If you want it to run in the background on macOS, use the `--daemon` install command above instead.
+
 Direct `pipx` install:
 
 ```bash
@@ -133,6 +135,8 @@ codex-sessions watch \
   --debounce-seconds 1.0 \
   --verbose
 ```
+
+This runs in the foreground and keeps the terminal occupied until you stop it with `Ctrl-C`.
 
 The installer creates a `codex-sessions` symlink in `~/.local/bin` by default.
 

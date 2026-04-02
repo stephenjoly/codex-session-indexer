@@ -635,7 +635,7 @@
           </li>
           <li>
             <strong class="feature-title">Fits the way Codex is used</strong>
-            <p>Run it manually, keep a watcher open, or install a macOS daemon.</p>
+            <p>Run it manually, keep a foreground watcher open, or install a macOS daemon for background updates.</p>
           </li>
           <li>
             <strong class="feature-title">Simple install path</strong>
@@ -664,14 +664,15 @@
 
           <article class="mode">
             <span class="mode-label">Watch / Daemon</span>
-            <h3>Keep indexes current while you work</h3>
-            <p>Use the same sync engine in watch mode so the right project files update automatically.</p>
+            <h3>Choose foreground or background watching</h3>
+            <p><code>watch</code> runs in the foreground and stays attached to your shell. If you want a background watcher on macOS, rerun the installer with <code>--daemon</code>.</p>
             <ul class="mode-notes">
-              <li>Near real-time updates</li>
+              <li><code>watch</code> is for live terminal use</li>
+              <li><code>--daemon</code> installs a macOS <code>launchd</code> watcher</li>
               <li>Good fit for heavy Codex workflows</li>
-              <li>Installer can register a macOS <code>launchd</code> watcher</li>
             </ul>
             <pre class="shell">codex-sessions watch --global-root "$HOME/Documents/Coding" --verbose</pre>
+            <pre class="shell">curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash -s -- --daemon</pre>
           </article>
         </div>
       </section>

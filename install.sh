@@ -328,6 +328,9 @@ Binary:
 Manual run:
   codex-sessions generate --global-root "$GLOBAL_ROOT" --verbose
 
-Watcher:
+Foreground watcher:
   codex-sessions watch --global-root "$GLOBAL_ROOT" --verbose
+
+Background watcher on macOS:
+  curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash -s -- --daemon
 EOF
