@@ -62,6 +62,26 @@ source .venv/bin/activate
 python3 -m pip install .
 ```
 
+## Update
+
+The simplest update path is to rerun the installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash
+```
+
+If you are using the macOS background watcher, rerun the daemon install instead:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash -s -- --daemon
+```
+
+Direct `pipx` update:
+
+```bash
+pipx upgrade codex-session-indexer
+```
+
 ## Uninstall
 
 Default uninstall:
@@ -93,6 +113,13 @@ The uninstall script removes:
 It does not remove generated `codex-sessions.md` files or the generated global index.
 
 ## Usage
+
+Check the installed version:
+
+```bash
+codex-sessions version
+codex-sessions --version
+```
 
 Default run:
 
@@ -211,3 +238,23 @@ Run against your real session store:
 source .venv/bin/activate
 codex-sessions generate --verbose
 ```
+
+## Releasing
+
+The project ships from GitHub `main`, but it should still be tagged for traceability.
+
+Recommended release flow:
+
+1. Update code, docs, and the version string in `pyproject.toml` and `src/codex_sessions/__init__.py`.
+2. Run the test suite.
+3. Commit and push `main`.
+4. Tag the release:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+5. Optionally create a GitHub Release for that tag.
+
+There is also a lightweight release checklist in [RELEASING.md](RELEASING.md).

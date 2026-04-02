@@ -4,12 +4,18 @@ import argparse
 import sys
 from pathlib import Path
 
+from . import __version__
 from .sync import SyncConfig, run_sync
 from .watch import watch_forever
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="codex-sessions")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
     home = Path.home()
     default_sessions_dir = home / ".codex" / "sessions"
@@ -76,6 +82,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Quiet period before a batch of filesystem events triggers an incremental sync.",
     )
 
+    subparsers.add_parser("version", help="Print the installed codex-session-indexer version.")
+
     return parser
 
 
@@ -134,6 +142,10 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stdout,
         )
         watch_forever(config, debounce_seconds=args.debounce_seconds, sync_runner=sync_and_report)
+        return 0
+
+    if args.command == "version":
+        print(__version__, file=sys.stdout)
         return 0
 
     parser.error(f"Unknown command: {args.command}")

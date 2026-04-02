@@ -14,6 +14,7 @@ from unittest.mock import patch
 from watchdog.events import FileModifiedEvent
 
 from codex_sessions.cli import main
+from codex_sessions import __version__
 from codex_sessions.indexer import (
     MANAGED_MARKER,
     format_duration,
@@ -476,6 +477,23 @@ class IndexerTests(unittest.TestCase):
             self.assertIn("tracked sessions", output.getvalue())
             loaded_state, _ = load_state(state_file)
             self.assertIsNotNone(loaded_state)
+
+    def test_cli_version_command_prints_package_version(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(["version"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(output.getvalue().strip(), __version__)
+
+    def test_cli_version_flag_prints_package_version(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output):
+            with self.assertRaises(SystemExit) as cm:
+                main(["--version"])
+
+        self.assertEqual(cm.exception.code, 0)
+        self.assertEqual(output.getvalue().strip(), f"codex-sessions {__version__}")
 
     def test_cli_watch_prints_startup_and_initial_sync_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

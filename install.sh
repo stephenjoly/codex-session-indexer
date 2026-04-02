@@ -333,4 +333,10 @@ Foreground watcher:
 
 Background watcher on macOS:
   curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash -s -- --daemon
+
+Check installed version:
+  codex-sessions version
+
+Update later by rerunning:
+  curl -fsSL https://raw.githubusercontent.com/stephenjoly/codex-session-indexer/main/install.sh | bash
 EOF
