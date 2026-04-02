@@ -124,7 +124,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "watch":
         config = _build_config(args, full_rebuild=False)
-        watch_forever(config, debounce_seconds=args.debounce_seconds)
+        def sync_and_report(sync_config: SyncConfig):
+            stats = run_sync(sync_config)
+            _print_summary(stats, dry_run=sync_config.dry_run)
+            return stats
+
+        print(
+            "Watching for Codex session changes. Press Ctrl-C to stop.",
+            file=sys.stdout,
+        )
+        watch_forever(config, debounce_seconds=args.debounce_seconds, sync_runner=sync_and_report)
         return 0
 
     parser.error(f"Unknown command: {args.command}")

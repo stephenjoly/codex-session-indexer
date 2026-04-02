@@ -9,6 +9,7 @@ import time
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 from watchdog.events import FileModifiedEvent
 
@@ -475,6 +476,35 @@ class IndexerTests(unittest.TestCase):
             self.assertIn("tracked sessions", output.getvalue())
             loaded_state, _ = load_state(state_file)
             self.assertIsNotNone(loaded_state)
+
+    def test_cli_watch_prints_startup_and_initial_sync_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            config, _, _, _, _, _, state_file = self._build_workspace(root)
+            output = io.StringIO()
+            with patch(
+                "codex_sessions.cli.watch_forever",
+                side_effect=lambda watch_config, debounce_seconds, sync_runner: sync_runner(watch_config),
+            ), redirect_stdout(output):
+                exit_code = main(
+                    [
+                        "watch",
+                        "--sessions-dir",
+                        str(config.sessions_dir),
+                        "--session-index",
+                        str(config.session_index),
+                        "--global-root",
+                        str(config.global_root),
+                        "--state-file",
+                        str(state_file),
+                        "--verbose",
+                    ]
+                )
+
+            self.assertEqual(exit_code, 0)
+            value = output.getvalue()
+            self.assertIn("Watching for Codex session changes. Press Ctrl-C to stop.", value)
+            self.assertIn("Sync complete.", value)
 
     def test_debounced_trigger_batches_marks(self) -> None:
         trigger = DebouncedTrigger()
